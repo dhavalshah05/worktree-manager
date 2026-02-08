@@ -13,6 +13,18 @@
           "name": "git-worktree-list",
           "cmd": "git",
           "args": ["worktree", "list"]
+        },
+        {
+          "name": "git-worktree-add",
+          "cmd": "git",
+          "args": [
+            "worktree",
+            "add",
+            {"validator": ".+"},
+            "-b",
+            {"validator": ".+"},
+            {"validator": ".+"}
+          ]
         }
       ]
     }
