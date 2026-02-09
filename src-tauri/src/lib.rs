@@ -36,8 +36,8 @@ fn get_branches(repo_path: String) -> Result<BranchesResponse, String> {
             continue;
         }
 
-        // Remove the "* " prefix from current branch
-        let branch_name = if trimmed.starts_with("* ") {
+        // Remove the "* " prefix from current branch or "+ " prefix from worktree branches
+        let branch_name = if trimmed.starts_with("* ") || trimmed.starts_with("+ ") {
             &trimmed[2..]
         } else {
             trimmed
