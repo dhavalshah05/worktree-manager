@@ -47,7 +47,8 @@
             "remove",
             {
               "validator": ".+"
-            }
+            },
+            "--force"
           ]
         }
       ]

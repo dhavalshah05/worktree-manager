@@ -6,6 +6,7 @@ import { WorktreeList } from "./features/worktrees/WorktreeList.jsx";
 import { RepoList } from "./features/repos/RepoList.jsx";
 import { Command } from "@tauri-apps/plugin-shell";
 import { getRepos, addRepo, removeRepo } from "./lib/storage.js";
+import { ToastProvider } from "./contexts/ToastContext.jsx";
 
 function App() {
   const [repos, setRepos] = useState([]);
@@ -111,88 +112,101 @@ function App() {
   };
 
   return (
-    <main className="container">
-      <section>
-        <h1>Worktree Manager</h1>
+    <ToastProvider>
+      <main className="container">
+        <section>
+          <h1>Worktree Manager</h1>
 
-        {addWorktreeError && (
-          <div className="banner" role="alert">
-            <span>{addWorktreeError}</span>
-            <button type="button" onClick={handleDismissAddWorktreeError}>
-              Dismiss
-            </button>
-          </div>
-        )}
+          {addWorktreeError && (
+            <div className="banner" role="alert">
+              <span>{addWorktreeError}</span>
+              <button type="button" onClick={handleDismissAddWorktreeError}>
+                Dismiss
+              </button>
+            </div>
+          )}
 
-        {formError && (
-          <div className="banner" role="alert">
-            <span>{formError}</span>
-            <button type="button" onClick={() => setFormError("")}>
-              Dismiss
-            </button>
-          </div>
-        )}
+          {formError && (
+            <div className="banner" role="alert">
+              <span>{formError}</span>
+              <button type="button" onClick={() => setFormError("")}>
+                Dismiss
+              </button>
+            </div>
+          )}
 
-        <form
-          className="row"
-          onSubmit={handleFormSubmit}
-        >
-          <input
-            id="repoPath"
-            name={"repoPath"}
-            placeholder="Enter repository absolute path"
+          <form
+            className="row"
+            onSubmit={handleFormSubmit}
+          >
+            <input
+              id="repoPath"
+              name={"repoPath"}
+              placeholder="Enter repository absolute path"
+            />
+            <button type="submit">Add</button>
+          </form>
+        </section>
+
+        <section>
+          {view === 'repo-list' ? (
+            <RepoList
+              repos={repos}
+              onSelectRepo={handleSelectRepo}
+              onDeleteRepo={handleDeleteRepo}
+            />
+          ) : (
+            <WorkTrees
+              repo={selectedRepo}
+              onAddWorktree={handleOpenAddWorktree}
+              onBack={handleBackToRepoList}
+              worktreeData={worktreeData}
+            />
+          )}
+        </section>
+
+        {isAddWorktreeOpen && (
+          <AddWorktreeModal
+            onClose={handleCloseAddWorktreeModal}
+            onNameSubmit={handleAddWorktreeSubmit}
+            repoPath={selectedRepo?.path}
           />
-          <button type="submit">Add</button>
-        </form>
-      </section>
-
-      <section>
-        {view === 'repo-list' ? (
-          <RepoList
-            repos={repos}
-            onSelectRepo={handleSelectRepo}
-            onDeleteRepo={handleDeleteRepo}
-          />
-        ) : (
-          <WorkTrees
-            repo={selectedRepo}
-            onAddWorktree={handleOpenAddWorktree}
-            onBack={handleBackToRepoList}
-            worktreeData={worktreeData}
-          />
         )}
-      </section>
-
-      {isAddWorktreeOpen && (
-        <AddWorktreeModal
-          onClose={handleCloseAddWorktreeModal}
-          onNameSubmit={handleAddWorktreeSubmit}
-          repoPath={selectedRepo?.path}
-        />
-      )}
-    </main>
+      </main>
+    </ToastProvider>
   );
 }
 
 
 
+import { useToast } from "./contexts/ToastContext.jsx";
+
+
 function WorkTrees({ repo, onAddWorktree, onBack, worktreeData }) {
   const { loading, error: errorMessage, worktrees, refresh } = worktreeData;
+  const { showToast } = useToast();
 
   const handleDeleteWorktree = async (worktree) => {
-    /*try {
+    try {
       const command = Command.create("git-worktree-remove", [
         "worktree",
         "remove",
         worktree.path,
+        "--force"
       ], {
         cwd: repo.path,
       });
-      await command.execute();
-      refresh(); // Refresh the worktree list after deletion
+
+      const result = await command.execute();
+      if (result.code === 0) {
+        showToast(`Worktree "${worktree.branch}" deleted successfully`, 'success');
+      } else {
+        showToast(`Failed to remove worktree: ${result.stderr || 'Unknown error'}`, 'error');
+      }
     } catch (error) {
+      showToast(`Failed to remove worktree: ${error.message || 'Unknown error'}`, 'error');
       console.error("Failed to remove worktree:", error);
-    }*/
+    }
   };
 
   return (
