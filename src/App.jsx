@@ -1,44 +1,93 @@
 import "./App.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFetchWorktrees } from "./features/worktrees/hooks/useFetchWorktrees.js";
 import { AddWorktreeModal } from "./features/worktrees/AddWorktreeModal.jsx";
+import { RepoList } from "./features/repos/RepoList.jsx";
 import { Command } from "@tauri-apps/plugin-shell";
+import { getRepos, addRepo, removeRepo } from "./lib/storage.js";
 
 function App() {
-  const [repoPath, setRepoPath] = useState(null);
+  const [repos, setRepos] = useState([]);
+  const [selectedRepo, setSelectedRepo] = useState(null);
+  const [view, setView] = useState('repo-list'); // 'repo-list' | 'worktrees'
   const [isAddWorktreeOpen, setIsAddWorktreeOpen] = useState(false);
   const [addWorktreeError, setAddWorktreeError] = useState("");
-  const worktreeData = useFetchWorktrees(repoPath);
+  const [formError, setFormError] = useState("");
+
+  const worktreeData = useFetchWorktrees(selectedRepo?.path);
+
+  // Load repositories on mount
+  useEffect(() => {
+    const loadedRepos = getRepos();
+    setRepos(loadedRepos);
+  }, []);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setFormError("");
+
     const formData = new FormData(e.target);
-    setRepoPath(formData.get("repoPath"));
+    const path = formData.get("repoPath");
+
+    if (!path || !path.trim()) {
+      setFormError("Please enter a repository path.");
+      return;
+    }
+
+    const result = addRepo(path);
+
+    if (result.success) {
+      setRepos(getRepos());
+      e.target.reset(); // Clear the form
+    } else {
+      setFormError(result.message);
+    }
+  };
+
+  const handleSelectRepo = (repo) => {
+    setSelectedRepo(repo);
+    setView('worktrees');
+  };
+
+  const handleBackToRepoList = () => {
+    setSelectedRepo(null);
+    setView('repo-list');
+  };
+
+  const handleDeleteRepo = (repoId) => {
+    const success = removeRepo(repoId);
+    if (success) {
+      setRepos(getRepos());
+      // If the deleted repo was selected, go back to repo list
+      if (selectedRepo && selectedRepo.id === repoId) {
+        handleBackToRepoList();
+      }
+    }
   };
 
   const handleCloseAddWorktreeModal = () => {
-    setIsAddWorktreeOpen(false)
-  }
+    setIsAddWorktreeOpen(false);
+  };
 
   const handleOpenAddWorktree = () => {
-    setIsAddWorktreeOpen(true)
-  }
+    setIsAddWorktreeOpen(true);
+  };
 
   const handleDismissAddWorktreeError = () => {
-    setAddWorktreeError("")
-  }
+    setAddWorktreeError("");
+  };
 
   const handleAddWorktreeSubmit = async (name, baseBranch) => {
-    handleCloseAddWorktreeModal()
-    setAddWorktreeError("")
+    handleCloseAddWorktreeModal();
+    setAddWorktreeError("");
 
-    if (!repoPath) {
-      setAddWorktreeError("Repository path is required to add a worktree.")
+    if (!selectedRepo) {
+      setAddWorktreeError("Repository path is required to add a worktree.");
       return;
     }
 
     const trimmedName = name.trim();
-    const worktreeRoot = `${repoPath}-worktrees`;
+    const worktreeRoot = `${selectedRepo.path}-worktrees`;
     const worktreePath = `${worktreeRoot}/${trimmedName}`;
 
     try {
@@ -50,15 +99,15 @@ function App() {
         trimmedName,
         baseBranch,
       ], {
-        cwd: repoPath,
+        cwd: selectedRepo.path,
       });
       const result = await command.execute();
-      console.log(result)
+      console.log(result);
     } catch (error) {
       const message = error?.message || "Failed to add worktree.";
       setAddWorktreeError(message);
     }
-  }
+  };
 
   return (
     <main className="container">
@@ -69,6 +118,15 @@ function App() {
           <div className="banner" role="alert">
             <span>{addWorktreeError}</span>
             <button type="button" onClick={handleDismissAddWorktreeError}>
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {formError && (
+          <div className="banner" role="alert">
+            <span>{formError}</span>
+            <button type="button" onClick={() => setFormError("")}>
               Dismiss
             </button>
           </div>
@@ -88,10 +146,17 @@ function App() {
       </section>
 
       <section>
-        {repoPath && (
+        {view === 'repo-list' ? (
+          <RepoList
+            repos={repos}
+            onSelectRepo={handleSelectRepo}
+            onDeleteRepo={handleDeleteRepo}
+          />
+        ) : (
           <WorkTrees
-            repoPath={repoPath}
+            repo={selectedRepo}
             onAddWorktree={handleOpenAddWorktree}
+            onBack={handleBackToRepoList}
             worktreeData={worktreeData}
           />
         )}
@@ -101,7 +166,7 @@ function App() {
         <AddWorktreeModal
           onClose={handleCloseAddWorktreeModal}
           onNameSubmit={handleAddWorktreeSubmit}
-          repoPath={repoPath}
+          repoPath={selectedRepo?.path}
         />
       )}
     </main>
@@ -110,12 +175,30 @@ function App() {
 
 
 
-function WorkTrees({ repoPath, onAddWorktree, worktreeData }) {
+function WorkTrees({ repo, onAddWorktree, onBack, worktreeData }) {
   const { loading, error: errorMessage, worktrees, refresh } = worktreeData;
 
   return (
     <div>
-      <h2>{repoPath}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            padding: '6px 12px',
+            fontSize: '0.9em',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          ← Back to Repositories
+        </button>
+        <h2 style={{ margin: 0 }}>{repo.name}</h2>
+      </div>
+      <p style={{ fontSize: '0.9em', color: '#666', marginTop: '0' }}>{repo.path}</p>
       <button type="button" onClick={onAddWorktree}>
         Add Worktree
       </button>
