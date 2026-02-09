@@ -5,6 +5,7 @@ import { AddWorktreeModal } from "./features/worktrees/AddWorktreeModal.jsx";
 import { WorktreeList } from "./features/worktrees/WorktreeList.jsx";
 import { RepoList } from "./features/repos/RepoList.jsx";
 import { Command } from "@tauri-apps/plugin-shell";
+import { invoke } from "@tauri-apps/api/core";
 import { getRepos, addRepo, removeRepo } from "./lib/storage.js";
 import { ToastProvider, useToast } from "./contexts/ToastContext.jsx";
 
@@ -32,6 +33,19 @@ function App() {
 
     if (!path || !path.trim()) {
       setFormError("Please enter a repository path.");
+      return;
+    }
+
+    // Check if the path is a git repository
+    try {
+      const isGitRepo = await invoke("is_git_repository", { repoPath: path.trim() });
+
+      if (!isGitRepo) {
+        setFormError("Only git repositories can be added.");
+        return;
+      }
+    } catch (error) {
+      setFormError("Failed to validate repository. Please check the path and try again.");
       return;
     }
 

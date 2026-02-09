@@ -14,6 +14,19 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
+fn is_git_repository(repo_path: String) -> bool {
+    let output = Command::new("git")
+        .args(&["rev-parse", "--git-dir"])
+        .current_dir(&repo_path)
+        .output();
+
+    match output {
+        Ok(result) => result.status.success(),
+        Err(_) => false,
+    }
+}
+
+#[tauri::command]
 fn get_branches(repo_path: String) -> Result<BranchesResponse, String> {
     let output = Command::new("git")
         .args(&["branch", "-a"])
@@ -71,7 +84,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .invoke_handler(tauri::generate_handler![greet, get_branches])
+        .invoke_handler(tauri::generate_handler![greet, get_branches, is_git_repository])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
