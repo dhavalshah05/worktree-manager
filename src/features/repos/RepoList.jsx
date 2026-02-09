@@ -79,7 +79,7 @@ function EmptyRepo() {
       </div>
       <h3 className="empty-state-title">No repositories yet</h3>
       <p className="empty-state-description">
-        Add a repository using the form above to get started.
+        Choose a git repository to get started.
       </p>
     </div>
   );

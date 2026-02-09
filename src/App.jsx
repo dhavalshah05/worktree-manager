@@ -24,40 +24,46 @@ function App() {
     setRepos(loadedRepos);
   }, []);
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setFormError("");
-
-    const formData = new FormData(e.target);
-    const path = formData.get("repoPath");
-
-    if (!path || !path.trim()) {
-      setFormError("Please enter a repository path.");
-      return;
-    }
-
-    // Check if the path is a git repository
+  const handleBrowseDirectory = async () => {
     try {
-      const isGitRepo = await invoke("is_git_repository", { repoPath: path.trim() });
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: 'Select Git Repository Directory',
+      });
 
-      if (!isGitRepo) {
-        setFormError("Only git repositories can be added.");
-        return;
+      if (selected) {
+        setFormError(""); // Clear any previous errors
+
+        // Check if the path is a git repository
+        try {
+          const isGitRepo = await invoke("is_git_repository", { repoPath: selected.trim() });
+
+          if (!isGitRepo) {
+            setFormError("Only git repositories can be added.");
+            return;
+          }
+        } catch (error) {
+          setFormError("Failed to validate repository. Please check the path and try again.");
+          return;
+        }
+
+        // Add the repository
+        const result = addRepo(selected);
+
+        if (result.success) {
+          setRepos(getRepos());
+        } else {
+          setFormError(result.message);
+        }
       }
     } catch (error) {
-      setFormError("Failed to validate repository. Please check the path and try again.");
-      return;
-    }
-
-    const result = addRepo(path);
-
-    if (result.success) {
-      setRepos(getRepos());
-      e.target.reset();
-    } else {
-      setFormError(result.message);
+      console.error('Failed to open directory picker:', error);
+      setFormError('Failed to open directory picker.');
     }
   };
+
 
   const handleSelectRepo = (repo) => {
     setSelectedRepo(repo);
@@ -150,15 +156,14 @@ function App() {
           )}
 
           {view === 'repo-list' && (
-            <form className="input-group" onSubmit={handleFormSubmit}>
-              <input
-                id="repoPath"
-                name="repoPath"
-                type="text"
-                placeholder="Enter repository absolute path..."
-              />
-              <button type="submit">Add Repository</button>
-            </form>
+            <div className="input-group">
+              <button type="button" onClick={handleBrowseDirectory} style={{ width: '100%' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                </svg>
+                Browse to Add Repository
+              </button>
+            </div>
           )}
 
           {view === 'repo-list' ? (
