@@ -6,19 +6,18 @@ import { WorktreeList } from "./features/worktrees/WorktreeList.jsx";
 import { RepoList } from "./features/repos/RepoList.jsx";
 import { Command } from "@tauri-apps/plugin-shell";
 import { getRepos, addRepo, removeRepo } from "./lib/storage.js";
-import { ToastProvider } from "./contexts/ToastContext.jsx";
+import { ToastProvider, useToast } from "./contexts/ToastContext.jsx";
 
 function App() {
   const [repos, setRepos] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState(null);
-  const [view, setView] = useState('repo-list'); // 'repo-list' | 'worktrees'
+  const [view, setView] = useState('repo-list');
   const [isAddWorktreeOpen, setIsAddWorktreeOpen] = useState(false);
   const [addWorktreeError, setAddWorktreeError] = useState("");
   const [formError, setFormError] = useState("");
 
   const worktreeData = useFetchWorktrees(selectedRepo?.path);
 
-  // Load repositories on mount
   useEffect(() => {
     const loadedRepos = getRepos();
     setRepos(loadedRepos);
@@ -40,7 +39,7 @@ function App() {
 
     if (result.success) {
       setRepos(getRepos());
-      e.target.reset(); // Clear the form
+      e.target.reset();
     } else {
       setFormError(result.message);
     }
@@ -60,7 +59,6 @@ function App() {
     const success = removeRepo(repoId);
     if (success) {
       setRepos(getRepos());
-      // If the deleted repo was selected, go back to repo list
       if (selectedRepo && selectedRepo.id === repoId) {
         handleBackToRepoList();
       }
@@ -113,12 +111,14 @@ function App() {
 
   return (
     <ToastProvider>
-      <main className="container">
-        <section>
-          <h1>Worktree Manager</h1>
+      <div className="app">
+        <header className="app-header">
+          <h1>Worktree <span>Manager</span></h1>
+        </header>
 
+        <main className="container">
           {addWorktreeError && (
-            <div className="banner" role="alert">
+            <div className="banner banner-error" role="alert">
               <span>{addWorktreeError}</span>
               <button type="button" onClick={handleDismissAddWorktreeError}>
                 Dismiss
@@ -127,7 +127,7 @@ function App() {
           )}
 
           {formError && (
-            <div className="banner" role="alert">
+            <div className="banner banner-error" role="alert">
               <span>{formError}</span>
               <button type="button" onClick={() => setFormError("")}>
                 Dismiss
@@ -135,20 +135,18 @@ function App() {
             </div>
           )}
 
-          <form
-            className="row"
-            onSubmit={handleFormSubmit}
-          >
-            <input
-              id="repoPath"
-              name={"repoPath"}
-              placeholder="Enter repository absolute path"
-            />
-            <button type="submit">Add</button>
-          </form>
-        </section>
+          {view === 'repo-list' && (
+            <form className="input-group" onSubmit={handleFormSubmit}>
+              <input
+                id="repoPath"
+                name="repoPath"
+                type="text"
+                placeholder="Enter repository absolute path..."
+              />
+              <button type="submit">Add Repository</button>
+            </form>
+          )}
 
-        <section>
           {view === 'repo-list' ? (
             <RepoList
               repos={repos}
@@ -163,23 +161,19 @@ function App() {
               worktreeData={worktreeData}
             />
           )}
-        </section>
 
-        {isAddWorktreeOpen && (
-          <AddWorktreeModal
-            onClose={handleCloseAddWorktreeModal}
-            onNameSubmit={handleAddWorktreeSubmit}
-            repoPath={selectedRepo?.path}
-          />
-        )}
-      </main>
+          {isAddWorktreeOpen && (
+            <AddWorktreeModal
+              onClose={handleCloseAddWorktreeModal}
+              onNameSubmit={handleAddWorktreeSubmit}
+              repoPath={selectedRepo?.path}
+            />
+          )}
+        </main>
+      </div>
     </ToastProvider>
   );
 }
-
-
-
-import { useToast } from "./contexts/ToastContext.jsx";
 
 
 function WorkTrees({ repo, onAddWorktree, onBack, worktreeData }) {
@@ -211,30 +205,56 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-        <button
-          type="button"
-          onClick={onBack}
-          style={{
-            padding: '6px 12px',
-            fontSize: '0.9em',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          ← Back to Repositories
+      <div className="view-header">
+        <button type="button" onClick={onBack} className="btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Back
         </button>
-        <h2 style={{ margin: 0 }}>{repo.name}</h2>
+        <div className="view-header-content">
+          <h2 className="mb-0">
+            {repo.name}
+            <span
+              className="path-icon-tooltip"
+              title={`${repo.path} (click to copy)`}
+              onClick={async () => {
+                try {
+                  const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+                  await writeText(repo.path);
+                  showToast('Path copied to clipboard', 'success');
+                } catch (error) {
+                  console.error('Failed to copy path:', error);
+                  showToast('Failed to copy path', 'error');
+                }
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+            </span>
+          </h2>
+        </div>
+        <button type="submit" onClick={onAddWorktree}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Add Worktree
+        </button>
       </div>
-      <p style={{ fontSize: '0.9em', color: '#666', marginTop: '0' }}>{repo.path}</p>
-      <button type="button" onClick={onAddWorktree}>
-        Add Worktree
-      </button>
-      {loading && <p>Loading worktrees...</p>}
-      {errorMessage && <p role="alert">{errorMessage}</p>}
+
+      {loading && (
+        <div className="empty-state">
+          <p>Loading worktrees...</p>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="banner banner-error" role="alert">
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
       {!loading && !errorMessage && (
         <WorktreeList
           worktrees={worktrees}
@@ -246,4 +266,3 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData }) {
 }
 
 export default App;
-

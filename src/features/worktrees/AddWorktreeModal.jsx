@@ -45,7 +45,6 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
   const handleWorktreeNameSubmit = (e) => {
     e.preventDefault();
 
-    // Validate worktree name
     if (worktreeNameError || worktreeName.length === 0) {
       if (!worktreeNameError && worktreeName.length === 0) {
         setWorktreeNameError("Worktree name is required.");
@@ -53,7 +52,6 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
       return;
     }
 
-    // Validate base branch
     if (!baseBranch || baseBranch.trim().length === 0) {
       setBaseBranchError("Base branch is required.");
       return;
@@ -99,99 +97,110 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
       <div className="modal">
         <header className="modal-header">
           <h3>Add Worktree</h3>
-          <button type="button" onClick={onClose}>
-            Close
+          <button type="button" onClick={onClose} aria-label="Close modal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </header>
+
         <form className="modal-body" onSubmit={handleWorktreeNameSubmit}>
           {/* Base Branch Selection */}
-          <label htmlFor="baseBranch">Base Branch</label>
-          <div className="combobox-container">
-            <input
-              id="baseBranch"
-              type="text"
-              value={isDropdownOpen ? searchQuery : baseBranch}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsDropdownOpen(true)}
-              placeholder="Search branches..."
-              disabled={isLoadingBranches}
-              aria-invalid={baseBranchError ? "true" : "false"}
-            />
-            {isDropdownOpen && (
-              <div className="combobox-dropdown">
-                {isLoadingBranches ? (
-                  <div className="combobox-loading">Loading branches...</div>
-                ) : (
-                  <>
-                    {filteredLocalBranches.length > 0 && (
-                      <div className="combobox-group">
-                        <div className="combobox-group-header">Local Branches</div>
-                        {filteredLocalBranches.map((branch) => (
-                          <div
-                            key={`local-${branch}`}
-                            className="combobox-item"
-                            onClick={() => handleBranchSelect(branch)}
-                          >
-                            {branch}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {filteredRemoteBranches.length > 0 && (
-                      <div className="combobox-group">
-                        <div className="combobox-group-header">Remote Branches</div>
-                        {filteredRemoteBranches.map((branch) => (
-                          <div
-                            key={`remote-${branch}`}
-                            className="combobox-item"
-                            onClick={() => handleBranchSelect(branch)}
-                          >
-                            {branch}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {filteredLocalBranches.length === 0 && filteredRemoteBranches.length === 0 && (
-                      <div className="combobox-empty">No branches found</div>
-                    )}
-                  </>
-                )}
-              </div>
+          <div>
+            <label htmlFor="baseBranch">Base Branch</label>
+            <div className="combobox-container">
+              <input
+                id="baseBranch"
+                type="text"
+                value={isDropdownOpen ? searchQuery : baseBranch}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsDropdownOpen(true)}
+                placeholder="Search branches..."
+                disabled={isLoadingBranches}
+                aria-invalid={baseBranchError ? "true" : "false"}
+              />
+              {isDropdownOpen && (
+                <div className="combobox-dropdown">
+                  {isLoadingBranches ? (
+                    <div className="combobox-loading">Loading branches...</div>
+                  ) : (
+                    <>
+                      {filteredLocalBranches.length > 0 && (
+                        <div className="combobox-group">
+                          <div className="combobox-group-header">Local Branches</div>
+                          {filteredLocalBranches.map((branch) => (
+                            <div
+                              key={`local-${branch}`}
+                              className="combobox-item"
+                              onClick={() => handleBranchSelect(branch)}
+                            >
+                              {branch}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {filteredRemoteBranches.length > 0 && (
+                        <div className="combobox-group">
+                          <div className="combobox-group-header">Remote Branches</div>
+                          {filteredRemoteBranches.map((branch) => (
+                            <div
+                              key={`remote-${branch}`}
+                              className="combobox-item"
+                              onClick={() => handleBranchSelect(branch)}
+                            >
+                              {branch}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {filteredLocalBranches.length === 0 && filteredRemoteBranches.length === 0 && (
+                        <div className="combobox-empty">No branches found</div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            {baseBranchError && (
+              <p className="field-error" role="alert">
+                {baseBranchError}
+              </p>
             )}
           </div>
-          {baseBranchError && (
-            <p className="field-error" role="alert">
-              {baseBranchError}
-            </p>
-          )}
 
           {/* Worktree Name */}
-          <label htmlFor="worktreeName">Worktree name</label>
-          <input
-            id="worktreeName"
-            name="worktreeName"
-            value={worktreeName}
-            onChange={handleWorktreeNameChange}
-            placeholder="feature-new-worktree"
-            pattern="[A-Za-z0-9-]+"
-            title="Only letters, numbers, and hyphens are allowed."
-            required
-            aria-invalid={worktreeNameError ? "true" : "false"}
-          />
-          {worktreeNameError && (
-            <p className="field-error" role="alert">
-              {worktreeNameError}
-            </p>
-          )}
+          <div>
+            <label htmlFor="worktreeName">Worktree Name</label>
+            <input
+              id="worktreeName"
+              name="worktreeName"
+              type="text"
+              value={worktreeName}
+              onChange={handleWorktreeNameChange}
+              placeholder="feature-new-worktree"
+              pattern="[A-Za-z0-9-]+"
+              title="Only letters, numbers, and hyphens are allowed."
+              required
+              aria-invalid={worktreeNameError ? "true" : "false"}
+            />
+            {worktreeNameError && (
+              <p className="field-error" role="alert">
+                {worktreeNameError}
+              </p>
+            )}
+          </div>
 
           <div className="modal-actions">
             <button type="button" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit">Save</button>
+            <button type="submit">
+              Create Worktree
+            </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

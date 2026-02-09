@@ -3,41 +3,31 @@ import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 
 export function WorktreeList({ worktrees, onDeleteWorktree }) {
     return (
-        <section style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: "1rem",
-        }}>
-            <h2>Worktrees</h2>
+        <section>
+            <div className="section-header">
+                <h3 className="section-title">Worktrees ({worktrees.length})</h3>
+            </div>
 
             {worktrees.length === 0 ? (
                 <EmptyWorktree />
             ) : (
-                <WorktreeListInternal worktrees={worktrees} onDeleteWorktree={onDeleteWorktree} />
+                <div className="list">
+                    {worktrees.map((worktree) => (
+                        <WorktreeItem
+                            key={`${worktree.path}-${worktree.raw}`}
+                            worktree={worktree}
+                            onDeleteWorktree={onDeleteWorktree}
+                        />
+                    ))}
+                </div>
             )}
         </section>
     );
 }
 
-function WorktreeListInternal({ worktrees, onDeleteWorktree }) {
-    return (
-        <>
-            {worktrees.map((worktree) => (
-                <WorktreeItem
-                    key={`${worktree.path}-${worktree.raw}`}
-                    worktree={worktree}
-                    onDeleteWorktree={onDeleteWorktree}
-                />
-            ))}
-        </>
-    )
-}
-
 function WorktreeItem({ worktree, onDeleteWorktree }) {
-
     const handleDelete = async (e) => {
-        e.stopPropagation()
+        e.stopPropagation();
         const branchName = worktree.branch || 'this worktree';
         const confirmed = await confirm(`Are you sure you want to remove "${branchName}"?`, {
             title: 'Confirm Removal',
@@ -46,13 +36,12 @@ function WorktreeItem({ worktree, onDeleteWorktree }) {
         if (confirmed) {
             onDeleteWorktree(worktree);
         }
-    }
+    };
 
     const handleCopyPath = async (e) => {
         e.stopPropagation();
         try {
             await writeText(worktree.path);
-            // Visual feedback - change button text temporarily
             e.target.textContent = 'Copied!';
             setTimeout(() => {
                 e.target.textContent = 'Copy Path';
@@ -60,69 +49,69 @@ function WorktreeItem({ worktree, onDeleteWorktree }) {
         } catch (error) {
             console.error('Failed to copy path:', error);
         }
-    }
+    };
 
     return (
-        <article style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: "0.5rem",
-            width: '100%',
-            maxWidth: '600px',
-            border: '2px solid gray',
-            borderRadius: '8px',
-            padding: "1rem",
-        }}>
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: "1rem",
-            }}>
-                <h3 style={{ margin: 0 }}>{worktree.branch || 'Detached HEAD'}</h3>
-                <button
-                    type="button"
-                    onClick={handleDelete}
-                    style={{
-                        padding: '4px 8px',
-                        fontSize: '0.85em',
-                        backgroundColor: '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                    }}
-                >
-                    Remove
-                </button>
+        <article className="worktree-card">
+            <div className="worktree-header">
+                <div className="flex items-center gap-4">
+                    <div className="list-item-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="6" y1="3" x2="6" y2="15" />
+                            <circle cx="18" cy="6" r="3" />
+                            <circle cx="6" cy="18" r="3" />
+                            <path d="M18 9a9 9 0 0 1-9 9" />
+                        </svg>
+                    </div>
+                    <h3 className="worktree-branch">{worktree.branch || 'Detached HEAD'}</h3>
+                </div>
+                <div className="card-actions">
+                    <button
+                        type="button"
+                        onClick={handleCopyPath}
+                        className="btn-secondary btn-sm"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                        Copy Path
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleDelete}
+                        className="btn-danger btn-sm"
+                        aria-label="Remove worktree"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                        Remove
+                    </button>
+                </div>
             </div>
-
-            <div style={{ fontSize: '0.9em', color: '#666', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <p style={{ margin: '4px 0' }}>
-                    <strong>Head:</strong> {worktree.head}
-                </p>
-                <button
-                    type="button"
-                    onClick={handleCopyPath}
-                    style={{
-                        padding: '4px 8px',
-                        fontSize: '0.85em',
-                        backgroundColor: '#6c757d',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                    }}
-                >
-                    Copy Path
-                </button>
+            <div className="worktree-meta">
+                <span><strong>HEAD:</strong> {worktree.head?.substring(0, 8) || 'N/A'}</span>
             </div>
         </article>
-    )
+    );
 }
 
 function EmptyWorktree() {
     return (
-        <p>No worktrees found. Add one using the button above.</p>
-    )
+        <div className="empty-state">
+            <div className="empty-state-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="6" y1="3" x2="6" y2="15" />
+                    <circle cx="18" cy="6" r="3" />
+                    <circle cx="6" cy="18" r="3" />
+                    <path d="M18 9a9 9 0 0 1-9 9" />
+                </svg>
+            </div>
+            <h3 className="empty-state-title">No worktrees found</h3>
+            <p className="empty-state-description">
+                Click "Add Worktree" to create a new worktree.
+            </p>
+        </div>
+    );
 }
