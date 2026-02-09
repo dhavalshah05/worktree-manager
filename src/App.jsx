@@ -2,6 +2,7 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import { useFetchWorktrees } from "./features/worktrees/hooks/useFetchWorktrees.js";
 import { AddWorktreeModal } from "./features/worktrees/AddWorktreeModal.jsx";
+import { WorktreeList } from "./features/worktrees/WorktreeList.jsx";
 import { RepoList } from "./features/repos/RepoList.jsx";
 import { Command } from "@tauri-apps/plugin-shell";
 import { getRepos, addRepo, removeRepo } from "./lib/storage.js";
@@ -178,6 +179,22 @@ function App() {
 function WorkTrees({ repo, onAddWorktree, onBack, worktreeData }) {
   const { loading, error: errorMessage, worktrees, refresh } = worktreeData;
 
+  const handleDeleteWorktree = async (worktree) => {
+    /*try {
+      const command = Command.create("git-worktree-remove", [
+        "worktree",
+        "remove",
+        worktree.path,
+      ], {
+        cwd: repo.path,
+      });
+      await command.execute();
+      refresh(); // Refresh the worktree list after deletion
+    } catch (error) {
+      console.error("Failed to remove worktree:", error);
+    }*/
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -204,28 +221,11 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData }) {
       </button>
       {loading && <p>Loading worktrees...</p>}
       {errorMessage && <p role="alert">{errorMessage}</p>}
-      {!loading && !errorMessage && worktrees.length === 0 && (
-        <p>No worktrees found.</p>
-      )}
-      {!loading && !errorMessage && worktrees.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Path</th>
-              <th>Head</th>
-              <th>Branch</th>
-            </tr>
-          </thead>
-          <tbody>
-            {worktrees.map((worktree) => (
-              <tr key={`${worktree.path}-${worktree.raw}`}>
-                <td>{worktree.path}</td>
-                <td>{worktree.head}</td>
-                <td>{worktree.branch}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {!loading && !errorMessage && (
+        <WorktreeList
+          worktrees={worktrees}
+          onDeleteWorktree={handleDeleteWorktree}
+        />
       )}
     </div>
   );

@@ -9,6 +9,7 @@
     "core:default",
     "opener:default",
     "dialog:allow-confirm",
+    "clipboard-manager:allow-write-text",
     {
       "identifier": "shell:allow-execute",
       "allow": [
@@ -33,6 +34,17 @@
             {
               "validator": ".+"
             },
+            {
+              "validator": ".+"
+            }
+          ]
+        },
+        {
+          "name": "git-worktree-remove",
+          "cmd": "git",
+          "args": [
+            "worktree",
+            "remove",
             {
               "validator": ".+"
             }
