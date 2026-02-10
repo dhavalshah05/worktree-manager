@@ -17,7 +17,7 @@ function App() {
   const [addWorktreeError, setAddWorktreeError] = useState("");
   const [formError, setFormError] = useState("");
 
-  const worktreeData = useFetchWorktrees(selectedRepo?.path);
+  const {worktreeResult, refresh: refreshWorktrees} = useFetchWorktrees(selectedRepo?.path);
 
   useEffect(() => {
     const loadedRepos = getRepos();
@@ -122,7 +122,11 @@ function App() {
         cwd: selectedRepo.path,
       });
       const result = await command.execute();
-      console.log(result);
+      if (result.code === 0) {
+        refreshWorktrees()
+      } else {
+        console.log(result);
+      }
     } catch (error) {
       const message = error?.message || "Failed to add worktree.";
       setAddWorktreeError(message);
@@ -177,7 +181,8 @@ function App() {
               repo={selectedRepo}
               onAddWorktree={handleOpenAddWorktree}
               onBack={handleBackToRepoList}
-              worktreeData={worktreeData}
+              worktreeData={worktreeResult}
+              refreshWorktrees={refreshWorktrees}
             />
           )}
 
@@ -195,8 +200,8 @@ function App() {
 }
 
 
-function WorkTrees({ repo, onAddWorktree, onBack, worktreeData }) {
-  const { loading, error: errorMessage, worktrees, refresh } = worktreeData;
+function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees }) {
+  const { loading, error: errorMessage, worktrees } = worktreeData;
   const { showToast } = useToast();
 
   const handleDeleteWorktree = async (worktree) => {
@@ -213,6 +218,7 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData }) {
       const result = await command.execute();
       if (result.code === 0) {
         showToast(`Worktree "${worktree.branch}" deleted successfully`, 'success');
+        refreshWorktrees()
       } else {
         showToast(`Failed to remove worktree: ${result.stderr || 'Unknown error'}`, 'error');
       }

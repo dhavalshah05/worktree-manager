@@ -30,6 +30,11 @@ export function useFetchWorktrees(repoPath) {
     error: null,
     worktrees: [],
   })
+  const [refreshKey, setRefreshKey] = useState(null)
+
+  const refresh = () => {
+    setRefreshKey((new Date()).getTime())
+  }
 
   useEffect(() => {
     let ignore = false;
@@ -73,8 +78,11 @@ export function useFetchWorktrees(repoPath) {
     return () => {
       ignore = true
     }
-  }, [repoPath]);
+  }, [repoPath, refreshKey]);
 
-  return worktreeResult;
+  return {
+    worktreeResult,
+    refresh
+  };
 }
 

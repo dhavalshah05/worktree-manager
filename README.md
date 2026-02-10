@@ -8,3 +8,6 @@ This template should help get you started developing with Tauri and React in Vit
 
 ## Run application
 `bun run tauri dev`
+
+## Build Mac application
+`bun tauri build --bundles app`
