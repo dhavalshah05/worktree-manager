@@ -203,6 +203,41 @@ function App() {
 function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees }) {
   const { loading, error: errorMessage, worktrees } = worktreeData;
   const { showToast } = useToast();
+  const openWithTargets = {
+    antigravity: {
+      label: "Antigravity",
+      launchers: [
+        { name: "open-antigravity-by-name", args: ["-a", "Antigravity"] },
+        { name: "open-antigravity-by-bundle", args: ["-b", "com.google.antigravity"] },
+        { name: "open-antigravity-by-app-path", args: ["-a", "/Applications/Antigravity.app"] }
+      ]
+    },
+    codex: {
+      label: "Codex",
+      launchers: [
+        { name: "open-codex-by-name", args: ["-a", "Codex"] },
+        { name: "open-codex-by-bundle", args: ["-b", "com.openai.codex"] },
+        { name: "open-codex-by-app-path", args: ["-a", "/Applications/Codex.app"] }
+      ]
+    },
+    "intellij-idea": {
+      label: "Intellij Idea",
+      launchers: [
+        { name: "open-intellij-by-name", args: ["-a", "IntelliJ IDEA"] },
+        { name: "open-intellij-by-bundle", args: ["-b", "com.jetbrains.intellij"] },
+        { name: "open-intellij-by-user-app-path", args: ["-a", "/Users/dhavalshah/Applications/IntelliJ IDEA.app"] },
+        { name: "open-intellij-by-system-app-path", args: ["-a", "/Applications/IntelliJ IDEA.app"] }
+      ]
+    },
+    cursor: {
+      label: "Cursor",
+      launchers: [
+        { name: "open-cursor-by-name", args: ["-a", "Cursor"] },
+        { name: "open-cursor-by-bundle", args: ["-b", "com.todesktop.230313mzl4w4u92"] },
+        { name: "open-cursor-by-app-path", args: ["-a", "/Applications/Cursor.app"] }
+      ]
+    }
+  };
 
   const handleDeleteWorktree = async (worktree) => {
     try {
@@ -225,6 +260,54 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees
     } catch (error) {
       showToast(`Failed to remove worktree: ${error.message || 'Unknown error'}`, 'error');
       console.error("Failed to remove worktree:", error);
+    }
+  };
+
+  const handleOpenWith = async (worktree, target) => {
+    const targetConfig = openWithTargets[target];
+    if (!targetConfig) {
+      showToast("Unsupported open target selected.", "error");
+      return;
+    }
+    const { label, launchers } = targetConfig;
+
+    if (!worktree?.path) {
+      showToast("Invalid worktree path.", "error");
+      return;
+    }
+
+    let lastError = "Unknown error";
+    for (const launcher of launchers) {
+      try {
+        const command = Command.create(launcher.name, [worktree.path, ...launcher.args]);
+        const result = await command.execute();
+        if (result.code === 0) {
+          showToast(`Opened "${worktree.branch || "worktree"}" in ${label}`, "success");
+          return;
+        }
+
+        lastError = result.stderr || result.stdout || `Exit code ${result.code}`;
+      } catch (error) {
+        lastError = error?.message || "Unknown error";
+      }
+    }
+
+    showToast(`Failed to open in ${label}: ${lastError}`, "error");
+    console.error("Failed to open worktree path:", {
+      target,
+      worktreePath: worktree.path,
+      error: lastError
+    });
+  };
+
+  const handleOpenWithSafe = async (worktree, target) => {
+    const label = openWithTargets[target]?.label || "selected app";
+    try {
+      await handleOpenWith(worktree, target);
+    } catch (error) {
+      const message = error?.message || "Unknown error";
+      showToast(`Failed to open in ${label}: ${message}`, "error");
+      console.error("Failed to run open with action:", error);
     }
   };
 
@@ -284,6 +367,7 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees
         <WorktreeList
           worktrees={worktrees}
           onDeleteWorktree={handleDeleteWorktree}
+          onOpenWith={handleOpenWithSafe}
         />
       )}
     </div>

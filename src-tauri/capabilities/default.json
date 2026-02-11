@@ -51,6 +51,149 @@
             },
             "--force"
           ]
+        },
+        {
+          "name": "open-antigravity-by-name",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "Antigravity"
+          ]
+        },
+        {
+          "name": "open-antigravity-by-bundle",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-b",
+            "com.google.antigravity"
+          ]
+        },
+        {
+          "name": "open-antigravity-by-app-path",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "/Applications/Antigravity.app"
+          ]
+        },
+        {
+          "name": "open-codex-by-name",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "Codex"
+          ]
+        },
+        {
+          "name": "open-codex-by-bundle",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-b",
+            "com.openai.codex"
+          ]
+        },
+        {
+          "name": "open-codex-by-app-path",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "/Applications/Codex.app"
+          ]
+        },
+        {
+          "name": "open-intellij-by-name",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "IntelliJ IDEA"
+          ]
+        },
+        {
+          "name": "open-intellij-by-bundle",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-b",
+            "com.jetbrains.intellij"
+          ]
+        },
+        {
+          "name": "open-intellij-by-user-app-path",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "/Users/dhavalshah/Applications/IntelliJ IDEA.app"
+          ]
+        },
+        {
+          "name": "open-intellij-by-system-app-path",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "/Applications/IntelliJ IDEA.app"
+          ]
+        },
+        {
+          "name": "open-cursor-by-name",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "Cursor"
+          ]
+        },
+        {
+          "name": "open-cursor-by-bundle",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-b",
+            "com.todesktop.230313mzl4w4u92"
+          ]
+        },
+        {
+          "name": "open-cursor-by-app-path",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "/Applications/Cursor.app"
+          ]
         }
       ]
     }

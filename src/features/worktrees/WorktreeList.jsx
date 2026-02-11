@@ -1,7 +1,7 @@
 import { confirm } from '@tauri-apps/plugin-dialog';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 
-export function WorktreeList({ worktrees, onDeleteWorktree }) {
+export function WorktreeList({ worktrees, onDeleteWorktree, onOpenWith }) {
     return (
         <section>
             <div className="section-header">
@@ -17,6 +17,7 @@ export function WorktreeList({ worktrees, onDeleteWorktree }) {
                             key={`${worktree.path}-${worktree.raw}`}
                             worktree={worktree}
                             onDeleteWorktree={onDeleteWorktree}
+                            onOpenWith={onOpenWith}
                         />
                     ))}
                 </div>
@@ -25,7 +26,7 @@ export function WorktreeList({ worktrees, onDeleteWorktree }) {
     );
 }
 
-function WorktreeItem({ worktree, onDeleteWorktree }) {
+function WorktreeItem({ worktree, onDeleteWorktree, onOpenWith }) {
     const handleDelete = async (e) => {
         e.stopPropagation();
         const branchName = worktree.branch || 'this worktree';
@@ -51,6 +52,20 @@ function WorktreeItem({ worktree, onDeleteWorktree }) {
         }
     };
 
+    const handleOpenWith = async (e) => {
+        e.stopPropagation();
+        const selectedOption = e.target.value;
+        if (!selectedOption) {
+            return;
+        }
+
+        try {
+            await onOpenWith(worktree, selectedOption);
+        } finally {
+            e.target.value = '';
+        }
+    };
+
     return (
         <article className="worktree-card">
             <div className="worktree-header">
@@ -66,6 +81,21 @@ function WorktreeItem({ worktree, onDeleteWorktree }) {
                     <h3 className="worktree-branch">{worktree.branch || 'Detached HEAD'}</h3>
                 </div>
                 <div className="card-actions">
+                    <select
+                        defaultValue=""
+                        onChange={handleOpenWith}
+                        onClick={(e) => e.stopPropagation()}
+                        className="open-with-select btn-sm"
+                        aria-label={`Open ${worktree.branch || 'worktree'} with`}
+                    >
+                        <option value="" disabled>
+                            Open with
+                        </option>
+                        <option value="antigravity">Antigravity</option>
+                        <option value="codex">Codex</option>
+                        <option value="intellij-idea">Intellij Idea</option>
+                        <option value="cursor">Cursor</option>
+                    </select>
                     <button
                         type="button"
                         onClick={handleCopyPath}
