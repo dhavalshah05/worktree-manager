@@ -269,6 +269,39 @@
             "-a",
             "/Applications/Utilities/Terminal.app"
           ]
+        },
+        {
+          "name": "open-claude-by-name",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "Claude"
+          ]
+        },
+        {
+          "name": "open-claude-by-bundle",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-b",
+            "com.anthropic.claudefordesktop"
+          ]
+        },
+        {
+          "name": "open-claude-by-app-path",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "/Applications/Claude.app"
+          ]
         }
       ]
     }

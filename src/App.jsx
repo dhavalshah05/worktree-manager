@@ -252,6 +252,14 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees
         { name: "open-terminal-by-bundle", args: ["-b", "com.apple.Terminal"] },
         { name: "open-terminal-by-app-path", args: ["-a", "/Applications/Utilities/Terminal.app"] }
       ]
+    },
+    claude: {
+      label: "Claude",
+      launchers: [
+        { name: "open-claude-by-name", args: ["-a", "Claude"] },
+        { name: "open-claude-by-bundle", args: ["-b", "com.anthropic.claudefordesktop"] },
+        { name: "open-claude-by-app-path", args: ["-a", "/Applications/Claude.app"] }
+      ]
     }
   };
 

@@ -141,6 +141,7 @@ function WorktreeItem({ worktree, onDeleteWorktree, onOpenWith }) {
                         <option value="cursor">Cursor</option>
                         <option value="android-studio">Android Studio</option>
                         <option value="terminal">Terminal</option>
+                        <option value="claude">Claude</option>
                     </select>
                     <button
                         type="button"
