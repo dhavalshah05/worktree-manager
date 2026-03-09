@@ -236,6 +236,22 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees
         { name: "open-cursor-by-bundle", args: ["-b", "com.todesktop.230313mzl4w4u92"] },
         { name: "open-cursor-by-app-path", args: ["-a", "/Applications/Cursor.app"] }
       ]
+    },
+    "android-studio": {
+      label: "Android Studio",
+      launchers: [
+        { name: "open-android-studio-by-name", args: ["-a", "Android Studio"] },
+        { name: "open-android-studio-by-bundle", args: ["-b", "com.google.android.studio"] },
+        { name: "open-android-studio-by-app-path", args: ["-a", "/Applications/Android Studio.app"] }
+      ]
+    },
+    terminal: {
+      label: "Terminal",
+      launchers: [
+        { name: "open-terminal-by-name", args: ["-a", "Terminal"] },
+        { name: "open-terminal-by-bundle", args: ["-b", "com.apple.Terminal"] },
+        { name: "open-terminal-by-app-path", args: ["-a", "/Applications/Utilities/Terminal.app"] }
+      ]
     }
   };
 

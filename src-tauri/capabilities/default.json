@@ -203,6 +203,72 @@
             "-a",
             "/Applications/Cursor.app"
           ]
+        },
+        {
+          "name": "open-android-studio-by-name",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "Android Studio"
+          ]
+        },
+        {
+          "name": "open-android-studio-by-bundle",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-b",
+            "com.google.android.studio"
+          ]
+        },
+        {
+          "name": "open-android-studio-by-app-path",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "/Applications/Android Studio.app"
+          ]
+        },
+        {
+          "name": "open-terminal-by-name",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "Terminal"
+          ]
+        },
+        {
+          "name": "open-terminal-by-bundle",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-b",
+            "com.apple.Terminal"
+          ]
+        },
+        {
+          "name": "open-terminal-by-app-path",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "/Applications/Utilities/Terminal.app"
+          ]
         }
       ]
     }

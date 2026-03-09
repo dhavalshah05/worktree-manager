@@ -139,6 +139,8 @@ function WorktreeItem({ worktree, onDeleteWorktree, onOpenWith }) {
                         <option value="codex">Codex</option>
                         <option value="intellij-idea">Intellij Idea</option>
                         <option value="cursor">Cursor</option>
+                        <option value="android-studio">Android Studio</option>
+                        <option value="terminal">Terminal</option>
                     </select>
                     <button
                         type="button"
