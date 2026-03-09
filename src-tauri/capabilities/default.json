@@ -53,6 +53,15 @@
           ]
         },
         {
+          "name": "git-worktree-prune",
+          "cmd": "git",
+          "args": [
+            "worktree",
+            "prune",
+            "--verbose"
+          ]
+        },
+        {
           "name": "open-antigravity-by-name",
           "cmd": "/usr/bin/open",
           "args": [

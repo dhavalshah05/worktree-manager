@@ -201,7 +201,7 @@ function App() {
 
 
 function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees }) {
-  const { loading, error: errorMessage, worktrees } = worktreeData;
+  const { loading, error: errorMessage, worktrees, prunableWorktrees } = worktreeData;
   const { showToast } = useToast();
   const openWithTargets = {
     antigravity: {
@@ -311,6 +311,29 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees
     }
   };
 
+  const handlePruneWorktrees = async () => {
+    try {
+      const command = Command.create("git-worktree-prune", [
+        "worktree",
+        "prune",
+        "--verbose"
+      ], {
+        cwd: repo.path,
+      });
+
+      const result = await command.execute();
+      if (result.code === 0) {
+        showToast('Worktrees pruned successfully', 'success');
+        refreshWorktrees();
+      } else {
+        showToast(`Failed to prune worktrees: ${result.stderr || 'Unknown error'}`, 'error');
+      }
+    } catch (error) {
+      showToast(`Failed to prune worktrees: ${error.message || 'Unknown error'}`, 'error');
+      console.error("Failed to prune worktrees:", error);
+    }
+  };
+
   return (
     <div>
       <div className="view-header">
@@ -366,8 +389,10 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees
       {!loading && !errorMessage && (
         <WorktreeList
           worktrees={worktrees}
+          prunableWorktrees={prunableWorktrees}
           onDeleteWorktree={handleDeleteWorktree}
           onOpenWith={handleOpenWithSafe}
+          onPrune={handlePruneWorktrees}
         />
       )}
     </div>

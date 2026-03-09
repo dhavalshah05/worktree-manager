@@ -287,6 +287,16 @@ button[type="button"]:hover {
   background: #c0392b;
 }
 
+/* Warning Button */
+.btn-warning {
+  background: #f39c12;
+  color: #000000;
+}
+
+.btn-warning:hover {
+  background: #e67e22;
+}
+
 /* Ghost Button */
 .btn-ghost {
   background: transparent;
@@ -447,6 +457,11 @@ button[type="button"]:hover {
   border-radius: var(--radius-md);
   color: var(--accent-gold);
   flex-shrink: 0;
+}
+
+.list-item-icon-warning {
+  background: rgba(243, 156, 18, 0.15);
+  color: #f39c12;
 }
 
 .list-item-content {
@@ -879,6 +894,12 @@ button[type="button"]:hover {
   font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.worktree-dir {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 .worktree-meta {

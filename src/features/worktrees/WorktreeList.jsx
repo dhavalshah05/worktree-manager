@@ -1,11 +1,49 @@
 import { confirm } from '@tauri-apps/plugin-dialog';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 
-export function WorktreeList({ worktrees, onDeleteWorktree, onOpenWith }) {
+export function WorktreeList({ worktrees, prunableWorktrees, onDeleteWorktree, onOpenWith, onPrune }) {
+    const hasPrunable = prunableWorktrees && prunableWorktrees.length > 0;
+
+    const handlePruneClick = async () => {
+        if (!hasPrunable) return;
+
+        // Build confirmation message listing prunable worktrees
+        const worktreeList = prunableWorktrees.map(wt => {
+            const branch = wt.branch || 'Detached HEAD';
+            const path = wt.path || wt.name || 'Unknown path';
+            return `- ${path} (branch: ${branch})`;
+        }).join('\n');
+
+        const message = `The following worktrees will be removed from git's registry:\n\n${worktreeList}\n\nThis action only removes the git tracking entry. The actual directory may already be deleted.`;
+
+        const confirmed = await confirm(message, {
+            title: `Prune ${prunableWorktrees.length} Worktree${prunableWorktrees.length > 1 ? 's' : ''}?`,
+            kind: 'warning'
+        });
+
+        if (confirmed) {
+            onPrune();
+        }
+    };
+
     return (
         <section>
             <div className="section-header">
                 <h3 className="section-title">Worktrees ({worktrees.length})</h3>
+                {hasPrunable && (
+                    <button
+                        type="button"
+                        onClick={handlePruneClick}
+                        className="btn-warning btn-sm"
+                        aria-label="Prune stale worktrees"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                        Prune Worktrees ({prunableWorktrees.length})
+                    </button>
+                )}
             </div>
 
             {worktrees.length === 0 ? (
@@ -67,10 +105,10 @@ function WorktreeItem({ worktree, onDeleteWorktree, onOpenWith }) {
     };
 
     return (
-        <article className="worktree-card">
+        <article className={`worktree-card ${worktree.isPrunable ? 'worktree-prunable' : ''}`}>
             <div className="worktree-header">
                 <div className="flex items-center gap-4">
-                    <div className="list-item-icon">
+                    <div className={`list-item-icon ${worktree.isPrunable ? 'list-item-icon-warning' : ''}`}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="6" y1="3" x2="6" y2="15" />
                             <circle cx="18" cy="6" r="3" />
@@ -78,7 +116,13 @@ function WorktreeItem({ worktree, onDeleteWorktree, onOpenWith }) {
                             <path d="M18 9a9 9 0 0 1-9 9" />
                         </svg>
                     </div>
-                    <h3 className="worktree-branch">{worktree.branch || 'Detached HEAD'}</h3>
+                    <div>
+                        <h3 className="worktree-branch">{worktree.branch || 'Detached HEAD'}</h3>
+                        <p className="worktree-dir">{worktree.path.split('/').pop()}</p>
+                        {worktree.isPrunable && (
+                            <span className="worktree-prunable-badge">Prunable</span>
+                        )}
+                    </div>
                 </div>
                 <div className="card-actions">
                     <select
