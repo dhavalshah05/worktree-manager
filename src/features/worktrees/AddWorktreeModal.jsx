@@ -10,6 +10,9 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [useWorktreeNameAsBranch, setUseWorktreeNameAsBranch] = useState(true);
+  const [branchName, setBranchName] = useState("");
+  const [branchNameError, setBranchNameError] = useState("");
 
   useEffect(() => {
     const fetchBranches = async () => {
@@ -57,7 +60,16 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
       return;
     }
 
-    onNameSubmit(worktreeName, baseBranch);
+    if (!useWorktreeNameAsBranch) {
+      if (branchName.length === 0) {
+        setBranchNameError("Branch name is required.");
+        return;
+      }
+      if (branchNameError) return;
+    }
+
+    const effectiveBranchName = useWorktreeNameAsBranch ? worktreeName : branchName;
+    onNameSubmit(worktreeName, baseBranch, effectiveBranchName);
   };
 
   const handleWorktreeNameChange = (event) => {
@@ -73,6 +85,33 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
     setWorktreeNameError(
       isValid ? "" : "Only letters, numbers, and hyphens are allowed."
     );
+  };
+
+  const handleBranchNameChange = (event) => {
+    const nextValue = event.target.value;
+    setBranchName(nextValue);
+
+    if (nextValue.length === 0) {
+      setBranchNameError("");
+      return;
+    }
+
+    const isValid = /^[A-Za-z0-9_\-\/]+$/.test(nextValue) && !nextValue.startsWith("/") && !nextValue.includes("//");
+    setBranchNameError(
+      isValid ? "" : "Only letters, numbers, hyphens, underscores, and slashes are allowed. Cannot start with or contain consecutive slashes."
+    );
+  };
+
+  const handleToggleUseWorktreeNameAsBranch = (e) => {
+    const checked = e.target.checked;
+    setUseWorktreeNameAsBranch(checked);
+    if (checked) {
+      setBranchName("");
+      setBranchNameError("");
+    } else {
+      setBranchName(worktreeName);
+      setBranchNameError("");
+    }
   };
 
   const handleBranchSelect = (branch) => {
@@ -190,6 +229,40 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
               </p>
             )}
           </div>
+
+          {/* Branch Name Toggle */}
+          <div>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", userSelect: "none" }}>
+              <input
+                type="checkbox"
+                checked={useWorktreeNameAsBranch}
+                onChange={handleToggleUseWorktreeNameAsBranch}
+              />
+              Use worktree name as branch name
+            </label>
+          </div>
+
+          {/* Custom Branch Name */}
+          {!useWorktreeNameAsBranch && (
+            <div>
+              <label htmlFor="branchName">Branch Name</label>
+              <input
+                id="branchName"
+                name="branchName"
+                type="text"
+                value={branchName}
+                onChange={handleBranchNameChange}
+                placeholder="feature/my-branch"
+                required
+                aria-invalid={branchNameError ? "true" : "false"}
+              />
+              {branchNameError && (
+                <p className="field-error" role="alert">
+                  {branchNameError}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="modal-actions">
             <button type="button" onClick={onClose}>

@@ -97,7 +97,7 @@ function App() {
     setAddWorktreeError("");
   };
 
-  const handleAddWorktreeSubmit = async (name, baseBranch) => {
+  const handleAddWorktreeSubmit = async (name, baseBranch, branchName) => {
     handleCloseAddWorktreeModal();
     setAddWorktreeError("");
 
@@ -107,6 +107,7 @@ function App() {
     }
 
     const trimmedName = name.trim();
+    const trimmedBranchName = (branchName ?? trimmedName).trim();
     const worktreeRoot = `${selectedRepo.path}-worktrees`;
     const worktreePath = `${worktreeRoot}/${trimmedName}`;
 
@@ -116,7 +117,7 @@ function App() {
         "add",
         worktreePath,
         "-b",
-        trimmedName,
+        trimmedBranchName,
         baseBranch,
       ], {
         cwd: selectedRepo.path,
