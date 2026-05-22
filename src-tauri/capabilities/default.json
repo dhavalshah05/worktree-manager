@@ -238,6 +238,39 @@
           ]
         },
         {
+          "name": "open-webstorm-by-name",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "WebStorm"
+          ]
+        },
+        {
+          "name": "open-webstorm-by-bundle",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-b",
+            "com.jetbrains.webstorm"
+          ]
+        },
+        {
+          "name": "open-webstorm-by-app-path",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "/Applications/WebStorm.app"
+          ]
+        },
+        {
           "name": "open-terminal-by-name",
           "cmd": "/usr/bin/open",
           "args": [

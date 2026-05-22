@@ -245,6 +245,14 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees
         { name: "open-android-studio-by-app-path", args: ["-a", "/Applications/Android Studio.app"] }
       ]
     },
+    webstorm: {
+      label: "WebStorm",
+      launchers: [
+        { name: "open-webstorm-by-name", args: ["-a", "WebStorm"] },
+        { name: "open-webstorm-by-bundle", args: ["-b", "com.jetbrains.webstorm"] },
+        { name: "open-webstorm-by-app-path", args: ["-a", "/Applications/WebStorm.app"] }
+      ]
+    },
     terminal: {
       label: "Terminal",
       launchers: [

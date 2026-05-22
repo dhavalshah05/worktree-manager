@@ -140,6 +140,7 @@ function WorktreeItem({ worktree, onDeleteWorktree, onOpenWith }) {
                         <option value="intellij-idea">Intellij Idea</option>
                         <option value="cursor">Cursor</option>
                         <option value="android-studio">Android Studio</option>
+                        <option value="webstorm">WebStorm</option>
                         <option value="terminal">Terminal</option>
                         <option value="claude">Claude</option>
                     </select>
