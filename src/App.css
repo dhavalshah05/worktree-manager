@@ -600,6 +600,45 @@ button[type="button"]:hover {
   visibility: visible;
 }
 
+.fetch-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: var(--space-3);
+  padding: var(--space-2);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: all var(--transition-fast);
+  border: none;
+}
+
+.fetch-icon-btn:hover:not(:disabled) {
+  background: var(--accent-gold-muted);
+  color: var(--accent-gold);
+}
+
+.fetch-icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.fetch-icon-btn svg {
+  display: block;
+}
+
+.fetch-icon-btn.fetching svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ===========================================
    Banner / Alerts
    =========================================== */

@@ -204,6 +204,25 @@ function App() {
 function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees }) {
   const { loading, error: errorMessage, worktrees, prunableWorktrees } = worktreeData;
   const { showToast } = useToast();
+  const [isFetching, setIsFetching] = useState(false);
+
+  const handleFetchAll = async () => {
+    if (isFetching) return;
+    setIsFetching(true);
+    try {
+      const command = Command.create("git-fetch-all", ["fetch", "--all"], { cwd: repo.path });
+      const result = await command.execute();
+      if (result.code === 0) {
+        showToast("Fetched from all remotes", "success");
+      } else {
+        showToast(`Fetch failed: ${result.stderr || "Unknown error"}`, "error");
+      }
+    } catch (error) {
+      showToast(`Fetch failed: ${error.message || "Unknown error"}`, "error");
+    } finally {
+      setIsFetching(false);
+    }
+  };
   const openWithTargets = {
     antigravity: {
       label: "Antigravity",
@@ -397,6 +416,20 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
               </svg>
             </span>
+            <button
+              type="button"
+              className={`fetch-icon-btn${isFetching ? " fetching" : ""}`}
+              title="Fetch from all remotes"
+              onClick={handleFetchAll}
+              disabled={isFetching}
+              aria-label="Fetch from all remotes"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
+            </button>
           </h2>
         </div>
         <button type="submit" onClick={onAddWorktree}>
