@@ -745,6 +745,39 @@ button[type="button"]:hover {
   border-top: 1px solid var(--border-default);
 }
 
+.mode-toggle {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
+  gap: var(--space-1);
+}
+
+.mode-toggle-btn {
+  flex: 1;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mode-toggle-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.mode-toggle-btn.active {
+  background: var(--accent-gold-muted);
+  color: var(--accent-gold);
+  border-color: rgba(245, 166, 35, 0.25);
+}
+
 /* ===========================================
    Form Field Error
    =========================================== */

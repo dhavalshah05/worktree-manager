@@ -9,6 +9,32 @@ import { invoke } from "@tauri-apps/api/core";
 import { getRepos, addRepo, removeRepo } from "./lib/storage.js";
 import { ToastProvider, useToast } from "./contexts/ToastContext.jsx";
 
+function parseGitError(stderr, context) {
+  const lower = stderr.toLowerCase();
+
+  if (lower.includes("is already checked out at")) {
+    const branch = context.branch || context.branchName || "";
+    return `Branch '${branch}' is already checked out in another worktree.`;
+  }
+
+  if (lower.includes("already exists")) {
+    if (context.isRemote && context.branch) {
+      const localName = context.branch.replace(/^[^/]+\//, '');
+      return `Cannot checkout '${context.branch}': a local branch named '${localName}' already exists. Delete it first or choose a different worktree name.`;
+    }
+    const branchName = context.branchName || context.worktreeName || "";
+    return `A branch named '${branchName}' already exists. Choose a different branch name.`;
+  }
+
+  if (lower.includes("did not match any") || lower.includes("invalid reference") || lower.includes("not a valid")) {
+    const branch = context.branch || context.baseBranch || "";
+    return `Branch '${branch}' was not found in this repository.`;
+  }
+
+  // Fallback: strip "fatal:" / "error:" prefix from git's raw message
+  return stderr.replace(/^(fatal|error):\s*/im, '').trim() || "Failed to create worktree.";
+}
+
 function App() {
   const [repos, setRepos] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState(null);
@@ -97,7 +123,7 @@ function App() {
     setAddWorktreeError("");
   };
 
-  const handleAddWorktreeSubmit = async (name, baseBranch, branchName) => {
+  const handleAddWorktreeSubmit = async (payload) => {
     handleCloseAddWorktreeModal();
     setAddWorktreeError("");
 
@@ -106,31 +132,53 @@ function App() {
       return;
     }
 
-    const trimmedName = name.trim();
-    const trimmedBranchName = (branchName ?? trimmedName).trim();
     const worktreeRoot = `${selectedRepo.path}-worktrees`;
-    const worktreePath = `${worktreeRoot}/${trimmedName}`;
+    const worktreePath = `${worktreeRoot}/${payload.worktreeName.trim()}`;
 
     try {
-      const command = Command.create("git-worktree-add", [
-        "worktree",
-        "add",
-        worktreePath,
-        "-b",
-        trimmedBranchName,
-        baseBranch,
-      ], {
-        cwd: selectedRepo.path,
-      });
-      const result = await command.execute();
-      if (result.code === 0) {
-        refreshWorktrees()
+      let result;
+
+      if (payload.mode === 'checkout') {
+        const { branch, isRemote } = payload;
+        if (isRemote) {
+          const localBranchName = branch.replace(/^[^/]+\//, '');
+          const command = Command.create("git-worktree-add-checkout-remote", [
+            "worktree", "add", "--track", "-b", localBranchName, worktreePath, branch,
+          ], { cwd: selectedRepo.path });
+          result = await command.execute();
+        } else {
+          const command = Command.create("git-worktree-add-checkout-local", [
+            "worktree", "add", worktreePath, branch,
+          ], { cwd: selectedRepo.path });
+          result = await command.execute();
+        }
       } else {
-        console.log(result);
+        const { baseBranch, branchName } = payload;
+        const command = Command.create("git-worktree-add", [
+          "worktree", "add", worktreePath, "-b", branchName, baseBranch,
+        ], { cwd: selectedRepo.path });
+        result = await command.execute();
+
+        if (result.code === 0) {
+          // Unset upstream — best-effort, non-critical
+          try {
+            const unsetCmd = Command.create("git-branch-unset-upstream", [
+              "branch", "--unset-upstream", branchName,
+            ], { cwd: selectedRepo.path });
+            await unsetCmd.execute();
+          } catch {
+            // ignore — not having upstream set is still fine
+          }
+        }
+      }
+
+      if (result.code === 0) {
+        refreshWorktrees();
+      } else {
+        setAddWorktreeError(parseGitError(result.stderr || "", payload));
       }
     } catch (error) {
-      const message = error?.message || "Failed to add worktree.";
-      setAddWorktreeError(message);
+      setAddWorktreeError(error?.message || "Failed to add worktree.");
     }
   };
 

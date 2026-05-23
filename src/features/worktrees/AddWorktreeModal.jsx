@@ -1,15 +1,107 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
+function BranchCombobox({ label, selectedValue, onSelect, branches, isLoading, error, placeholder = "Search branches..." }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isOpen && !event.target.closest('.combobox-container')) {
+        setIsOpen(false);
+        setSearchQuery("");
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  const filterBranches = (list) => {
+    if (!searchQuery) return list;
+    return list.filter(b => b.toLowerCase().includes(searchQuery.toLowerCase()));
+  };
+
+  const filteredLocal = filterBranches(branches.local);
+  const filteredRemote = filterBranches(branches.remote);
+
+  return (
+    <div>
+      <label htmlFor={`combobox-${label}`}>{label}</label>
+      <div className="combobox-container">
+        <input
+          id={`combobox-${label}`}
+          type="text"
+          value={isOpen ? searchQuery : selectedValue}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder}
+          disabled={isLoading}
+          aria-invalid={error ? "true" : "false"}
+        />
+        {isOpen && (
+          <div className="combobox-dropdown">
+            {isLoading ? (
+              <div className="combobox-loading">Loading branches...</div>
+            ) : (
+              <>
+                {filteredLocal.length > 0 && (
+                  <div className="combobox-group">
+                    <div className="combobox-group-header">Local Branches</div>
+                    {filteredLocal.map((branch) => (
+                      <div
+                        key={`local-${branch}`}
+                        className="combobox-item"
+                        onClick={() => { onSelect(branch, false); setIsOpen(false); setSearchQuery(""); }}
+                      >
+                        {branch}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {filteredRemote.length > 0 && (
+                  <div className="combobox-group">
+                    <div className="combobox-group-header">Remote Branches</div>
+                    {filteredRemote.map((branch) => (
+                      <div
+                        key={`remote-${branch}`}
+                        className="combobox-item"
+                        onClick={() => { onSelect(branch, true); setIsOpen(false); setSearchQuery(""); }}
+                      >
+                        {branch}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {filteredLocal.length === 0 && filteredRemote.length === 0 && (
+                  <div className="combobox-empty">No branches found</div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+      {error && <p className="field-error" role="alert">{error}</p>}
+    </div>
+  );
+}
+
 export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
-  const [worktreeNameError, setWorktreeNameError] = useState("");
-  const [worktreeName, setWorktreeName] = useState("");
-  const [baseBranch, setBaseBranch] = useState("master");
-  const [baseBranchError, setBaseBranchError] = useState("");
+  const [mode, setMode] = useState('checkout');
   const [branches, setBranches] = useState({ local: [], remote: [] });
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Shared
+  const [worktreeName, setWorktreeName] = useState("");
+  const [worktreeNameError, setWorktreeNameError] = useState("");
+
+  // Checkout mode
+  const [selectedBranch, setSelectedBranch] = useState("");
+  const [selectedBranchIsRemote, setSelectedBranchIsRemote] = useState(false);
+  const [selectedBranchError, setSelectedBranchError] = useState("");
+
+  // New branch mode
+  const [baseBranch, setBaseBranch] = useState("");
+  const [baseBranchError, setBaseBranchError] = useState("");
   const [useWorktreeNameAsBranch, setUseWorktreeNameAsBranch] = useState(true);
   const [branchName, setBranchName] = useState("");
   const [branchNameError, setBranchNameError] = useState("");
@@ -17,85 +109,67 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
   useEffect(() => {
     const fetchBranches = async () => {
       if (!repoPath) return;
-
       setIsLoadingBranches(true);
       try {
         const result = await invoke("get_branches", { repoPath });
         setBranches(result);
       } catch (error) {
         console.error("Failed to fetch branches:", error);
-        setBaseBranchError("Failed to load branches. Please try again.");
       } finally {
         setIsLoadingBranches(false);
       }
     };
-
     fetchBranches();
   }, [repoPath]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isDropdownOpen && !event.target.closest('.combobox-container')) {
-        setIsDropdownOpen(false);
-        setSearchQuery("");
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isDropdownOpen]);
-
-  const handleWorktreeNameSubmit = (e) => {
-    e.preventDefault();
-
-    if (worktreeNameError || worktreeName.length === 0) {
-      if (!worktreeNameError && worktreeName.length === 0) {
-        setWorktreeNameError("Worktree name is required.");
-      }
-      return;
-    }
-
-    if (!baseBranch || baseBranch.trim().length === 0) {
-      setBaseBranchError("Base branch is required.");
-      return;
-    }
-
-    if (!useWorktreeNameAsBranch) {
-      if (branchName.length === 0) {
-        setBranchNameError("Branch name is required.");
-        return;
-      }
-      if (branchNameError) return;
-    }
-
-    const effectiveBranchName = useWorktreeNameAsBranch ? worktreeName : branchName;
-    onNameSubmit(worktreeName, baseBranch, effectiveBranchName);
+  const handleModeChange = (newMode) => {
+    setMode(newMode);
+    setWorktreeName("");
+    setWorktreeNameError("");
+    setSelectedBranch("");
+    setSelectedBranchIsRemote(false);
+    setSelectedBranchError("");
+    setBaseBranch("");
+    setBaseBranchError("");
+    setBranchName("");
+    setBranchNameError("");
+    setUseWorktreeNameAsBranch(true);
   };
 
   const handleWorktreeNameChange = (event) => {
     const nextValue = event.target.value;
     setWorktreeName(nextValue);
-
     if (nextValue.length === 0) {
       setWorktreeNameError("");
       return;
     }
-
     const isValid = /^[A-Za-z0-9-]+$/.test(nextValue);
-    setWorktreeNameError(
-      isValid ? "" : "Only letters, numbers, and hyphens are allowed."
-    );
+    setWorktreeNameError(isValid ? "" : "Only letters, numbers, and hyphens are allowed.");
+  };
+
+  const handleCheckoutBranchSelect = (branch, isRemote) => {
+    setSelectedBranch(branch);
+    setSelectedBranchIsRemote(isRemote);
+    setSelectedBranchError("");
+    // Auto-populate worktree name: strip remote prefix, replace slashes with hyphens
+    const displayName = isRemote ? branch.replace(/^[^/]+\//, '') : branch;
+    const sanitized = displayName.replace(/\//g, '-');
+    setWorktreeName(sanitized);
+    setWorktreeNameError("");
+  };
+
+  const handleBaseBranchSelect = (branch) => {
+    setBaseBranch(branch);
+    setBaseBranchError("");
   };
 
   const handleBranchNameChange = (event) => {
     const nextValue = event.target.value;
     setBranchName(nextValue);
-
     if (nextValue.length === 0) {
       setBranchNameError("");
       return;
     }
-
     const isValid = /^[A-Za-z0-9_\-\/]+$/.test(nextValue) && !nextValue.startsWith("/") && !nextValue.includes("//");
     setBranchNameError(
       isValid ? "" : "Only letters, numbers, hyphens, underscores, and slashes are allowed. Cannot start with or contain consecutive slashes."
@@ -114,22 +188,36 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
     }
   };
 
-  const handleBranchSelect = (branch) => {
-    setBaseBranch(branch);
-    setBaseBranchError("");
-    setIsDropdownOpen(false);
-    setSearchQuery("");
-  };
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  const filterBranches = (branchList) => {
-    if (!searchQuery) return branchList;
-    return branchList.filter(branch =>
-      branch.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  };
+    if (!worktreeName || worktreeNameError) {
+      if (!worktreeName) setWorktreeNameError("Worktree name is required.");
+      return;
+    }
 
-  const filteredLocalBranches = filterBranches(branches.local);
-  const filteredRemoteBranches = filterBranches(branches.remote);
+    if (mode === 'checkout') {
+      if (!selectedBranch) {
+        setSelectedBranchError("Please select a branch to checkout.");
+        return;
+      }
+      onNameSubmit({ mode: 'checkout', worktreeName, branch: selectedBranch, isRemote: selectedBranchIsRemote });
+    } else {
+      if (!baseBranch) {
+        setBaseBranchError("Base branch is required.");
+        return;
+      }
+      if (!useWorktreeNameAsBranch) {
+        if (!branchName) {
+          setBranchNameError("Branch name is required.");
+          return;
+        }
+        if (branchNameError) return;
+      }
+      const effectiveBranchName = useWorktreeNameAsBranch ? worktreeName : branchName;
+      onNameSubmit({ mode: 'new-branch', worktreeName, baseBranch, branchName: effectiveBranchName });
+    }
+  };
 
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true">
@@ -144,133 +232,103 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
           </button>
         </header>
 
-        <form className="modal-body" onSubmit={handleWorktreeNameSubmit}>
-          {/* Base Branch Selection */}
-          <div>
-            <label htmlFor="baseBranch">Base Branch</label>
-            <div className="combobox-container">
-              <input
-                id="baseBranch"
-                type="text"
-                value={isDropdownOpen ? searchQuery : baseBranch}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsDropdownOpen(true)}
-                placeholder="Search branches..."
-                disabled={isLoadingBranches}
-                aria-invalid={baseBranchError ? "true" : "false"}
+        <form className="modal-body" onSubmit={handleSubmit}>
+          {/* Mode Toggle */}
+          <div className="mode-toggle">
+            <button
+              type="button"
+              className={`mode-toggle-btn${mode === 'checkout' ? ' active' : ''}`}
+              onClick={() => handleModeChange('checkout')}
+            >
+              Checkout Branch
+            </button>
+            <button
+              type="button"
+              className={`mode-toggle-btn${mode === 'new-branch' ? ' active' : ''}`}
+              onClick={() => handleModeChange('new-branch')}
+            >
+              New Branch
+            </button>
+          </div>
+
+          {mode === 'checkout' ? (
+            <>
+              <BranchCombobox
+                label="Branch"
+                selectedValue={selectedBranch}
+                onSelect={handleCheckoutBranchSelect}
+                branches={branches}
+                isLoading={isLoadingBranches}
+                error={selectedBranchError}
               />
-              {isDropdownOpen && (
-                <div className="combobox-dropdown">
-                  {isLoadingBranches ? (
-                    <div className="combobox-loading">Loading branches...</div>
-                  ) : (
-                    <>
-                      {filteredLocalBranches.length > 0 && (
-                        <div className="combobox-group">
-                          <div className="combobox-group-header">Local Branches</div>
-                          {filteredLocalBranches.map((branch) => (
-                            <div
-                              key={`local-${branch}`}
-                              className="combobox-item"
-                              onClick={() => handleBranchSelect(branch)}
-                            >
-                              {branch}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {filteredRemoteBranches.length > 0 && (
-                        <div className="combobox-group">
-                          <div className="combobox-group-header">Remote Branches</div>
-                          {filteredRemoteBranches.map((branch) => (
-                            <div
-                              key={`remote-${branch}`}
-                              className="combobox-item"
-                              onClick={() => handleBranchSelect(branch)}
-                            >
-                              {branch}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {filteredLocalBranches.length === 0 && filteredRemoteBranches.length === 0 && (
-                        <div className="combobox-empty">No branches found</div>
-                      )}
-                    </>
-                  )}
+              <div>
+                <label htmlFor="worktreeName">Worktree Name</label>
+                <input
+                  id="worktreeName"
+                  type="text"
+                  value={worktreeName}
+                  onChange={handleWorktreeNameChange}
+                  placeholder="feature-my-branch"
+                  required
+                  aria-invalid={worktreeNameError ? "true" : "false"}
+                />
+                {worktreeNameError && <p className="field-error" role="alert">{worktreeNameError}</p>}
+              </div>
+            </>
+          ) : (
+            <>
+              <BranchCombobox
+                label="Base Branch"
+                selectedValue={baseBranch}
+                onSelect={handleBaseBranchSelect}
+                branches={branches}
+                isLoading={isLoadingBranches}
+                error={baseBranchError}
+              />
+              <div>
+                <label htmlFor="worktreeName">Worktree Name</label>
+                <input
+                  id="worktreeName"
+                  type="text"
+                  value={worktreeName}
+                  onChange={handleWorktreeNameChange}
+                  placeholder="feature-new-worktree"
+                  required
+                  aria-invalid={worktreeNameError ? "true" : "false"}
+                />
+                {worktreeNameError && <p className="field-error" role="alert">{worktreeNameError}</p>}
+              </div>
+              <div>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", userSelect: "none" }}>
+                  <input
+                    type="checkbox"
+                    checked={useWorktreeNameAsBranch}
+                    onChange={handleToggleUseWorktreeNameAsBranch}
+                  />
+                  Use worktree name as branch name
+                </label>
+              </div>
+              {!useWorktreeNameAsBranch && (
+                <div>
+                  <label htmlFor="branchName">Branch Name</label>
+                  <input
+                    id="branchName"
+                    type="text"
+                    value={branchName}
+                    onChange={handleBranchNameChange}
+                    placeholder="feature/my-branch"
+                    required
+                    aria-invalid={branchNameError ? "true" : "false"}
+                  />
+                  {branchNameError && <p className="field-error" role="alert">{branchNameError}</p>}
                 </div>
               )}
-            </div>
-            {baseBranchError && (
-              <p className="field-error" role="alert">
-                {baseBranchError}
-              </p>
-            )}
-          </div>
-
-          {/* Worktree Name */}
-          <div>
-            <label htmlFor="worktreeName">Worktree Name</label>
-            <input
-              id="worktreeName"
-              name="worktreeName"
-              type="text"
-              value={worktreeName}
-              onChange={handleWorktreeNameChange}
-              placeholder="feature-new-worktree"
-              pattern="[A-Za-z0-9-]+"
-              title="Only letters, numbers, and hyphens are allowed."
-              required
-              aria-invalid={worktreeNameError ? "true" : "false"}
-            />
-            {worktreeNameError && (
-              <p className="field-error" role="alert">
-                {worktreeNameError}
-              </p>
-            )}
-          </div>
-
-          {/* Branch Name Toggle */}
-          <div>
-            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", userSelect: "none" }}>
-              <input
-                type="checkbox"
-                checked={useWorktreeNameAsBranch}
-                onChange={handleToggleUseWorktreeNameAsBranch}
-              />
-              Use worktree name as branch name
-            </label>
-          </div>
-
-          {/* Custom Branch Name */}
-          {!useWorktreeNameAsBranch && (
-            <div>
-              <label htmlFor="branchName">Branch Name</label>
-              <input
-                id="branchName"
-                name="branchName"
-                type="text"
-                value={branchName}
-                onChange={handleBranchNameChange}
-                placeholder="feature/my-branch"
-                required
-                aria-invalid={branchNameError ? "true" : "false"}
-              />
-              {branchNameError && (
-                <p className="field-error" role="alert">
-                  {branchNameError}
-                </p>
-              )}
-            </div>
+            </>
           )}
 
           <div className="modal-actions">
-            <button type="button" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit">
-              Create Worktree
-            </button>
+            <button type="button" onClick={onClose}>Cancel</button>
+            <button type="submit">Create Worktree</button>
           </div>
         </form>
       </div>

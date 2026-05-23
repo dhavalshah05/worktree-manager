@@ -23,6 +23,38 @@
           ]
         },
         {
+          "name": "git-worktree-add-checkout-local",
+          "cmd": "git",
+          "args": [
+            "worktree",
+            "add",
+            { "validator": ".+" },
+            { "validator": ".+" }
+          ]
+        },
+        {
+          "name": "git-worktree-add-checkout-remote",
+          "cmd": "git",
+          "args": [
+            "worktree",
+            "add",
+            "--track",
+            "-b",
+            { "validator": ".+" },
+            { "validator": ".+" },
+            { "validator": ".+" }
+          ]
+        },
+        {
+          "name": "git-branch-unset-upstream",
+          "cmd": "git",
+          "args": [
+            "branch",
+            "--unset-upstream",
+            { "validator": ".+" }
+          ]
+        },
+        {
           "name": "git-worktree-list",
           "cmd": "git",
           "args": [
