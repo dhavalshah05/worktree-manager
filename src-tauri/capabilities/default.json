@@ -311,6 +311,39 @@
           ]
         },
         {
+          "name": "open-ghostty-by-name",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "Ghostty"
+          ]
+        },
+        {
+          "name": "open-ghostty-by-bundle",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-b",
+            "com.mitchellh.ghostty"
+          ]
+        },
+        {
+          "name": "open-ghostty-by-app-path",
+          "cmd": "/usr/bin/open",
+          "args": [
+            {
+              "validator": ".+"
+            },
+            "-a",
+            "/Applications/Ghostty.app"
+          ]
+        },
+        {
           "name": "open-terminal-by-name",
           "cmd": "/usr/bin/open",
           "args": [

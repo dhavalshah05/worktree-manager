@@ -329,6 +329,14 @@ function WorkTrees({ repo, onAddWorktree, onBack, worktreeData, refreshWorktrees
         { name: "open-terminal-by-app-path", args: ["-a", "/Applications/Utilities/Terminal.app"] }
       ]
     },
+    ghostty: {
+      label: "Ghostty",
+      launchers: [
+        { name: "open-ghostty-by-name", args: ["-a", "Ghostty"] },
+        { name: "open-ghostty-by-bundle", args: ["-b", "com.mitchellh.ghostty"] },
+        { name: "open-ghostty-by-app-path", args: ["-a", "/Applications/Ghostty.app"] }
+      ]
+    },
     claude: {
       label: "Claude",
       launchers: [
