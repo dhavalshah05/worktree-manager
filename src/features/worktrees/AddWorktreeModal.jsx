@@ -94,6 +94,12 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
   const [worktreeName, setWorktreeName] = useState("");
   const [worktreeNameError, setWorktreeNameError] = useState("");
 
+  // Location (parent directory the worktree is created under). Defaults to the
+  // conventional "<repo>-worktrees" folder; the user may override it per-add.
+  const defaultLocation = repoPath ? `${repoPath}-worktrees` : "";
+  const [location, setLocation] = useState(defaultLocation);
+  const [locationError, setLocationError] = useState("");
+
   // Checkout mode
   const [selectedBranch, setSelectedBranch] = useState("");
   const [selectedBranchIsRemote, setSelectedBranchIsRemote] = useState(false);
@@ -163,6 +169,41 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
     setBaseBranchError("");
   };
 
+  const validateLocation = (value) => {
+    if (!value.trim()) {
+      return "Location is required.";
+    }
+    if (/\s/.test(value)) {
+      return "Location cannot contain spaces.";
+    }
+    return "";
+  };
+
+  const handleLocationChange = (event) => {
+    const nextValue = event.target.value;
+    setLocation(nextValue);
+    setLocationError(validateLocation(nextValue));
+  };
+
+  const handleBrowseLocation = async () => {
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: 'Select Worktree Location',
+        defaultPath: location || undefined,
+      });
+      if (selected) {
+        const nextLocation = typeof selected === 'string' ? selected : selected.path ?? location;
+        setLocation(nextLocation);
+        setLocationError(validateLocation(nextLocation));
+      }
+    } catch (error) {
+      console.error('Failed to open directory picker:', error);
+    }
+  };
+
   const handleBranchNameChange = (event) => {
     const nextValue = event.target.value;
     setBranchName(nextValue);
@@ -196,12 +237,20 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
       return;
     }
 
+    const locationValidationError = validateLocation(location);
+    if (locationValidationError) {
+      setLocationError(locationValidationError);
+      return;
+    }
+
+    const trimmedLocation = location.trim().replace(/\/+$/, "");
+
     if (mode === 'checkout') {
       if (!selectedBranch) {
         setSelectedBranchError("Please select a branch to checkout.");
         return;
       }
-      onNameSubmit({ mode: 'checkout', worktreeName, branch: selectedBranch, isRemote: selectedBranchIsRemote });
+      onNameSubmit({ mode: 'checkout', worktreeName, branch: selectedBranch, isRemote: selectedBranchIsRemote, location: trimmedLocation });
     } else {
       if (!baseBranch) {
         setBaseBranchError("Base branch is required.");
@@ -215,7 +264,7 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
         if (branchNameError) return;
       }
       const effectiveBranchName = useWorktreeNameAsBranch ? worktreeName : branchName;
-      onNameSubmit({ mode: 'new-branch', worktreeName, baseBranch, branchName: effectiveBranchName });
+      onNameSubmit({ mode: 'new-branch', worktreeName, baseBranch, branchName: effectiveBranchName, location: trimmedLocation });
     }
   };
 
@@ -325,6 +374,30 @@ export function AddWorktreeModal({ onClose, onNameSubmit, repoPath }) {
               )}
             </>
           )}
+
+          <div>
+            <label htmlFor="worktreeLocation">Location</label>
+            <div className="location-input-row">
+              <input
+                id="worktreeLocation"
+                type="text"
+                value={location}
+                onChange={handleLocationChange}
+                placeholder="Parent directory for the worktree"
+                aria-invalid={locationError ? "true" : "false"}
+              />
+              <button type="button" className="btn-secondary" onClick={handleBrowseLocation}>
+                Browse
+              </button>
+            </div>
+            {locationError && <p className="field-error" role="alert">{locationError}</p>}
+            <p className="location-preview">
+              Will be created at:{" "}
+              <code>
+                {`${location.trim().replace(/\/+$/, "")}/${worktreeName.trim() || "<name>"}`}
+              </code>
+            </p>
+          </div>
 
           <div className="modal-actions">
             <button type="button" onClick={onClose}>Cancel</button>

@@ -132,7 +132,7 @@ function App() {
       return;
     }
 
-    const worktreeRoot = `${selectedRepo.path}-worktrees`;
+    const worktreeRoot = (payload.location || "").trim().replace(/\/+$/, "") || `${selectedRepo.path}-worktrees`;
     const worktreePath = `${worktreeRoot}/${payload.worktreeName.trim()}`;
 
     try {
