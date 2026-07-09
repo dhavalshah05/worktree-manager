@@ -104,10 +104,15 @@ function WorktreeItem({ worktree, onDeleteWorktree, onOpenWith }) {
         }
     };
 
+    const localBranch = worktree.branch || 'Detached HEAD';
+    const trackingBranch = worktree.tracking || '';
+    const worktreeName = worktree.path.split('/').pop();
+    const shortHead = worktree.head?.substring(0, 8) || 'N/A';
+
     return (
         <article className={`worktree-card ${worktree.isPrunable ? 'worktree-prunable' : ''}`}>
             <div className="worktree-header">
-                <div className="flex items-center gap-4">
+                <div className="worktree-header-main">
                     <div className={`list-item-icon ${worktree.isPrunable ? 'list-item-icon-warning' : ''}`}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="6" y1="3" x2="6" y2="15" />
@@ -116,12 +121,30 @@ function WorktreeItem({ worktree, onDeleteWorktree, onOpenWith }) {
                             <path d="M18 9a9 9 0 0 1-9 9" />
                         </svg>
                     </div>
-                    <div>
-                        <h3 className="worktree-branch">{worktree.branch || 'Detached HEAD'}</h3>
-                        <p className="worktree-dir">{worktree.path.split('/').pop()}</p>
+                    <div className="worktree-identity">
                         {worktree.isPrunable && (
                             <span className="worktree-prunable-badge">Prunable</span>
                         )}
+                        <div className="worktree-field">
+                            <span className="worktree-field-label">Local</span>
+                            <span className="worktree-field-value" title={localBranch}>{localBranch}</span>
+                        </div>
+                        <div className="worktree-field">
+                            <span className="worktree-field-label">Tracking</span>
+                            {trackingBranch ? (
+                                <span className="worktree-field-value" title={trackingBranch}>{trackingBranch}</span>
+                            ) : (
+                                <span className="worktree-field-value worktree-field-empty">Not tracking</span>
+                            )}
+                        </div>
+                        <div className="worktree-field">
+                            <span className="worktree-field-label">Worktree</span>
+                            <span className="worktree-field-value" title={worktreeName}>{worktreeName}</span>
+                        </div>
+                        <div className="worktree-field">
+                            <span className="worktree-field-label">HEAD</span>
+                            <span className="worktree-field-value worktree-field-muted">{shortHead}</span>
+                        </div>
                     </div>
                 </div>
                 <div className="card-actions">
@@ -168,9 +191,6 @@ function WorktreeItem({ worktree, onDeleteWorktree, onOpenWith }) {
                         Remove
                     </button>
                 </div>
-            </div>
-            <div className="worktree-meta">
-                <span><strong>HEAD:</strong> {worktree.head?.substring(0, 8) || 'N/A'}</span>
             </div>
         </article>
     );

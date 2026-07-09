@@ -27,6 +27,33 @@ function parseWorktreeList(output) {
     });
 }
 
+// Builds a map of local branch name -> tracking branch (e.g. "master" -> "origin/master").
+// Each line looks like "master origin/master". A branch with no upstream has no second value.
+function parseUpstreamMap(output) {
+  const upstreamByBranch = {};
+  if (!output) {
+    return upstreamByBranch;
+  }
+
+  output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .forEach((line) => {
+      // Git branch names never contain spaces, so the first space splits branch from upstream.
+      const spaceIndex = line.indexOf(" ");
+      if (spaceIndex === -1) {
+        upstreamByBranch[line] = "";
+      } else {
+        const branch = line.slice(0, spaceIndex);
+        const upstream = line.slice(spaceIndex + 1).trim();
+        upstreamByBranch[branch] = upstream;
+      }
+    });
+
+  return upstreamByBranch;
+}
+
 
 
 export function useFetchWorktrees(repoPath) {
@@ -60,7 +87,20 @@ export function useFetchWorktrees(repoPath) {
         });
         const listOutput = await listCommand.execute();
         const listStdout = listOutput.stdout?.trim() ?? "";
-        const worktrees = parseWorktreeList(listStdout);
+
+        // Fetch the tracking (upstream) branch for every local branch.
+        const upstreamCommand = Command.create("git-for-each-ref-upstream", [], {
+          cwd: repoPath,
+        });
+        const upstreamOutput = await upstreamCommand.execute();
+        const upstreamStdout = upstreamOutput.stdout?.trim() ?? "";
+        const upstreamByBranch = parseUpstreamMap(upstreamStdout);
+
+        // Attach the tracking branch to each worktree by its local branch name.
+        const worktrees = parseWorktreeList(listStdout).map((worktree) => ({
+          ...worktree,
+          tracking: worktree.branch ? (upstreamByBranch[worktree.branch] ?? "") : "",
+        }));
 
         // Extract prunable worktrees from the parsed list
         const prunableWorktrees = worktrees.filter(wt => wt.isPrunable);

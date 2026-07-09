@@ -977,41 +977,90 @@ button[type="button"]:hover {
 }
 
 .worktree-card .card-actions {
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  width: 150px;
+}
+
+.worktree-card .card-actions .open-with-select,
+.worktree-card .card-actions .btn-sm {
+  width: 100%;
+  min-width: 0;
 }
 
 .worktree-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
-  margin-bottom: var(--space-3);
 }
 
-.worktree-branch {
-  margin: 0;
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.worktree-dir {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.worktree-meta {
+.worktree-header-main {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  font-size: var(--font-size-sm);
+  align-items: flex-start;
+  gap: var(--space-4);
+  min-width: 0;
+  flex: 1;
+}
+
+.worktree-header-main .list-item-icon {
+  flex-shrink: 0;
+}
+
+.worktree-identity {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: var(--space-4);
+  row-gap: var(--space-2);
+  min-width: 0;
+}
+
+.worktree-field {
+  display: contents;
+}
+
+.worktree-field-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--text-tertiary);
 }
 
-.worktree-meta strong {
+.worktree-field-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.worktree-field-value.worktree-field-muted {
   color: var(--text-secondary);
+}
+
+.worktree-field-value.worktree-field-empty {
+  font-style: italic;
+  color: var(--text-tertiary);
+}
+
+.worktree-prunable-badge {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 2px var(--space-2);
+  margin-bottom: var(--space-1);
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-gold);
+  background: var(--accent-gold-muted);
 }
 
 /* ===========================================
